@@ -4,14 +4,38 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
 import java.util.Map;
 
+@Configuration
+class JWTHelper{
+    @Value("${auth.jwt.server_secret:SimpleETSecret}")
+    private String secret;
+
+    public String getSecret() {
+        return secret;
+    }
+}
+
+@Component
 public class JWTUtils {
 
-    // 这里可以使用生成的秘钥
-    private static final String SECRET = "SimpleETSecretKey";
+
+    private static String SECRET;
+
+    @Autowired
+    private JWTHelper jwtHelper;
+
+    @PostConstruct
+    public void init() {
+        SECRET = jwtHelper.getSecret();
+    }
 
     /**
      * Generate token
@@ -21,7 +45,6 @@ public class JWTUtils {
      * @return token string
      */
     public static String generateToken(int expire, Map<String, String> map) {
-        // 设置有效期, 24 小时
         Calendar instance = Calendar.getInstance();
         instance.add(Calendar.SECOND, expire);
 
@@ -42,6 +65,7 @@ public class JWTUtils {
      * @return DecodedJWT object
      */
     public static DecodedJWT verifyToken(String token) {
+//        System.out.println(SECRET);
         return JWT.require(Algorithm.HMAC256(SECRET))
                 .build().verify(token);
     }
